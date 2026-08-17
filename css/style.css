@@ -1,0 +1,237 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #0b0d19;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #fff;
+}
+
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+canvas#game-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ui-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.25s ease-in-out;
+  z-index: 10;
+}
+
+.ui-layer.hidden {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/* HUD Overlay */
+#hud {
+  pointer-events: none;
+  justify-content: flex-start;
+  padding: 20px;
+}
+
+.hud-top {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stat-box {
+  background: rgba(15, 23, 42, 0.75);
+  border: 2px solid #38bdf8;
+  border-radius: 8px;
+  padding: 8px 16px;
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.stat-box .label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #94a3b8;
+}
+
+.stat-box .value {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #f8fafc;
+}
+
+.powerup-bar {
+  margin-top: 15px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid #f59e0b;
+  border-radius: 20px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.progress-track {
+  width: 120px;
+  height: 8px;
+  background: #334155;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+#powerup-progress {
+  width: 100%;
+  height: 100%;
+  background: #f59e0b;
+  transition: width 0.1s linear;
+}
+
+/* Menu and Game Over Modals */
+.panel {
+  background: rgba(15, 23, 42, 0.92);
+  border: 2px solid #6366f1;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(99, 102, 241, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.game-title {
+  font-size: 2.8rem;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #38bdf8;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+}
+
+.game-title span {
+  color: #f43f5e;
+  text-shadow: 0 0 12px rgba(244, 63, 94, 0.6);
+}
+
+.subtitle {
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  color: #cbd5e1;
+}
+
+.high-score-tag {
+  background: #1e293b;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #38bdf8;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+  border: none;
+  color: #fff;
+  padding: 14px 36px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(244, 63, 94, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(244, 63, 94, 0.6);
+}
+
+.primary-btn:active {
+  transform: translateY(1px);
+}
+
+.controls-guide {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  background: #1e293b;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.icon-btn {
+  background: transparent;
+  border: 1px solid #475569;
+  color: #94a3b8;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.game-over-title {
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: #f43f5e;
+  letter-spacing: 1px;
+}
+
+.score-summary {
+  width: 100%;
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  color: #94a3b8;
+}
+
+.summary-row .highlight {
+  color: #fff;
+  font-weight: 700;
+}
