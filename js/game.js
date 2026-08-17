@@ -15,6 +15,9 @@ class GameEngine {
     this.maxSpeed = 32;
     this.distanceTraveled = 0;
     this.nextSpawnZ = 30;
+    this.lastPrimaryLane = 0;
+    this.sameLaneStreak = 0;
+    this.lastPattern = 'single';
 
     this.highScore = parseInt(localStorage.getItem('cr_high_score') || '0', 10);
     this.lastTime = 0;
@@ -83,6 +86,9 @@ class GameEngine {
     this.speed = 14;
     this.distanceTraveled = 0;
     this.nextSpawnZ = 30;
+    this.lastPrimaryLane = 0;
+    this.sameLaneStreak = 0;
+    this.lastPattern = 'single';
 
     this.state = 'PLAYING';
     this.uiMenu.classList.add('hidden');
@@ -109,29 +115,112 @@ class GameEngine {
     this.uiGameOver.classList.remove('hidden');
   }
 
-  spawnSegment(z) {
-    const lanePattern = [-1, 0, 1].sort(() => Math.random() - 0.5);
-    const primaryLane = lanePattern[0];
-    const secondaryLane = lanePattern[1];
+  shuffleLanes() {
+    return [-1, 0, 1].sort(() => Math.random() - 0.5);
+  }
 
-    const rand = Math.random();
-    let obsType = 'BARRIER_LOW';
-    if (rand > 0.6) obsType = 'TRAIN';
-    else if (rand > 0.35) obsType = 'BARRIER_HIGH';
+  choosePrimaryLane() {
+    const lanes = this.shuffleLanes();
 
+    if (this.sameLaneStreak >= 1) {
+      const alternateLane = lanes.find(lane => lane !== this.lastPrimaryLane);
+      this.lastPrimaryLane = alternateLane;
+      this.sameLaneStreak = 0;
+      return alternateLane;
+    }
+
+    const lane = lanes[0];
+    if (lane === this.lastPrimaryLane) {
+      this.sameLaneStreak++;
+    } else {
+      this.sameLaneStreak = 0;
+      this.lastPrimaryLane = lane;
+    }
+
+    return lane;
+  }
+
+  chooseObstacleType(intensity = 0) {
+    const roll = Math.random();
+    const trainThreshold = 0.72 - (intensity * 0.12);
+    const highBarrierThreshold = 0.38 - (intensity * 0.08);
+
+    if (roll > trainThreshold) return 'TRAIN';
+    if (roll > highBarrierThreshold) return 'BARRIER_HIGH';
+    return 'BARRIER_LOW';
+  }
+
+  activateObstacle(lane, z, type, speedZ = 0) {
     const obs = this.obstaclesPool.find(o => !o.active);
-    if (obs) {
-      const trainSpeed = (obsType === 'TRAIN' && Math.random() > 0.5) ? -4 : 0;
-      obs.spawn(primaryLane, z, obsType, trainSpeed);
+    if (!obs) return false;
+
+    obs.spawn(lane, z, type, speedZ);
+    return true;
+  }
+
+  spawnCoinLine(lane, startZ, count = 5, spacing = 1.8, heightFn = () => 0.8) {
+    for (let i = 0; i < count; i++) {
+      const coin = this.coinsPool.find(c => !c.active);
+      if (!coin) return;
+      coin.spawn(lane, heightFn(i), startZ + (i * spacing));
+    }
+  }
+
+  spawnSegment(z) {
+    const lanes = this.shuffleLanes();
+    const primaryLane = this.choosePrimaryLane();
+    const remainingLanes = lanes.filter(lane => lane !== primaryLane);
+    const secondaryLane = remainingLanes[0];
+    const safeLane = remainingLanes[1];
+    const intensity = Math.min(1, (this.speed - 14) / (this.maxSpeed - 14));
+
+    const patternOptions = ['single', 'double', 'staggered'];
+    if (intensity > 0.25) patternOptions.push('pinch');
+    if (intensity > 0.45) patternOptions.push('train_mix');
+
+    let pattern = patternOptions[Math.floor(Math.random() * patternOptions.length)];
+    if (pattern === this.lastPattern && Math.random() < 0.55) {
+      pattern = patternOptions[(patternOptions.indexOf(pattern) + 1) % patternOptions.length];
+    }
+    this.lastPattern = pattern;
+
+    if (pattern === 'single') {
+      const type = this.chooseObstacleType(intensity * 0.7);
+      const trainSpeed = (type === 'TRAIN' && Math.random() > 0.5) ? -4 - (intensity * 2) : 0;
+      this.activateObstacle(primaryLane, z, type, trainSpeed);
+      this.spawnCoinLine(safeLane, z, 5, 1.8, i => 0.8 + Math.sin(i * 0.6) * 0.15);
+      return 20 + (Math.random() * 6);
     }
 
-    // Spawn coin arcs in free lane
-    for (let i = 0; i < 5; i++) {
-      const coin = this.coinsPool.find(c => !c.active);
-      if (coin) {
-        coin.spawn(secondaryLane, 0.8, z + (i * 1.8));
-      }
+    if (pattern === 'double') {
+      this.activateObstacle(primaryLane, z, this.chooseObstacleType(intensity * 0.4));
+      this.activateObstacle(secondaryLane, z, this.chooseObstacleType(intensity * 0.25));
+      this.spawnCoinLine(safeLane, z + 1, 6, 1.7, i => 0.85 + Math.sin(i * 0.7) * 0.2);
+      return 22 + (Math.random() * 6);
     }
+
+    if (pattern === 'staggered') {
+      this.activateObstacle(primaryLane, z, this.chooseObstacleType(intensity * 0.45));
+      this.activateObstacle(secondaryLane, z + 8, this.chooseObstacleType(intensity * 0.6));
+      this.spawnCoinLine(safeLane, z, 3, 1.8, i => 0.8 + (i * 0.08));
+      this.spawnCoinLine(primaryLane, z + 10, 3, 1.8, i => 0.95 + Math.sin(i * 0.8) * 0.12);
+      return 26 + (Math.random() * 7);
+    }
+
+    if (pattern === 'pinch') {
+      this.activateObstacle(primaryLane, z, 'BARRIER_HIGH');
+      this.activateObstacle(safeLane, z + 7, 'BARRIER_LOW');
+      this.spawnCoinLine(secondaryLane, z + 1.5, 6, 1.6, i => 0.85 + Math.sin(i * 0.8) * 0.18);
+      return 28 + (Math.random() * 6);
+    }
+
+    const trainLane = Math.random() > 0.5 ? primaryLane : secondaryLane;
+    const supportLane = trainLane === primaryLane ? secondaryLane : primaryLane;
+    const trainSpeed = Math.random() > 0.5 ? -5 - (intensity * 3) : 0;
+    this.activateObstacle(trainLane, z, 'TRAIN', trainSpeed);
+    this.activateObstacle(supportLane, z + 7.5, this.chooseObstacleType(intensity * 0.5));
+    this.spawnCoinLine(safeLane, z + 1, 7, 1.55, i => 0.8 + Math.sin(i * 0.9) * 0.15);
+    return 30 + (Math.random() * 8);
   }
 
   checkAABB(b1, b2) {
@@ -160,8 +249,8 @@ class GameEngine {
 
     // Procedural level generation trigger
     if (this.player.z + 70 > this.nextSpawnZ) {
-      this.spawnSegment(this.nextSpawnZ);
-      this.nextSpawnZ += 24 + Math.random() * 8;
+      const nextGap = this.spawnSegment(this.nextSpawnZ);
+      this.nextSpawnZ += nextGap;
     }
 
     // Update obstacles and check collisions
