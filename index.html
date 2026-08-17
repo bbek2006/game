@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cyber Runner 3D - Endless Subway Challenge</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+
+    <!-- In-Game HUD -->
+    <div id="hud" class="ui-layer hidden">
+      <div class="hud-top">
+        <div class="stat-box">
+          <span class="label">SCORE</span>
+          <span id="score-display" class="value">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="label">COINS</span>
+          <span id="coins-display" class="value">🪙 0</span>
+        </div>
+        <div class="stat-box">
+          <span class="label">MULTIPLIER</span>
+          <span id="mult-display" class="value">x1.0</span>
+        </div>
+      </div>
+      <div id="active-powerup-bar" class="powerup-bar hidden">
+        <span id="powerup-name">MAGNET</span>
+        <div class="progress-track"><div id="powerup-progress"></div></div>
+      </div>
+    </div>
+
+    <!-- Start / Menu Overlay -->
+    <div id="menu-screen" class="ui-layer">
+      <div class="panel">
+        <h1 class="game-title">CYBER<br><span>RUNNER</span></h1>
+        <p class="subtitle">DODGE THE TRAINS • GRAB THE COINS</p>
+        
+        <div class="high-score-tag">
+          BEST SCORE: <span id="menu-high-score">0</span>
+        </div>
+
+        <button id="btn-play" class="primary-btn">PLAY NOW</button>
+        
+        <div class="controls-guide">
+          <p><strong>Controls:</strong> Arrow Keys / WASD or Swipe</p>
+          <p><strong>Left/Right:</strong> Switch Lanes | <strong>Up:</strong> Jump | <strong>Down:</strong> Slide</p>
+        </div>
+        
+        <button id="btn-audio-toggle" class="icon-btn">🔊 Sound: ON</button>
+      </div>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div id="game-over-screen" class="ui-layer hidden">
+      <div class="panel">
+        <h2 class="game-over-title">BUSTED!</h2>
+        <div class="score-summary">
+          <div class="summary-row">
+            <span>Score:</span>
+            <span id="final-score" class="highlight">0</span>
+          </div>
+          <div class="summary-row">
+            <span>Coins Collected:</span>
+            <span id="final-coins" class="highlight">0</span>
+          </div>
+          <div class="summary-row">
+            <span>High Score:</span>
+            <span id="final-high-score" class="highlight">0</span>
+          </div>
+        </div>
+        <button id="btn-restart" class="primary-btn">RUN AGAIN</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/audio.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/entities.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
