@@ -30,16 +30,124 @@ class Renderer {
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
+  renderBackdrop(playerZ) {
+    const sky = this.ctx.createLinearGradient(0, 0, 0, this.cy + 120);
+    sky.addColorStop(0, '#60a5fa');
+    sky.addColorStop(0.35, '#a78bfa');
+    sky.addColorStop(0.7, '#f9a8d4');
+    sky.addColorStop(1, '#f3c98b');
+    this.ctx.fillStyle = sky;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.cy + 120);
+
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
+    this.ctx.beginPath();
+    this.ctx.arc(this.canvas.width * 0.82, this.canvas.height * 0.16, 54, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.renderMountainRange(playerZ, 0.14, this.cy * 0.9, ['#6b4f3a', '#7b5a40', '#8c6948'], 240, 118, 0.65);
+    this.renderMountainRange(playerZ, 0.26, this.cy * 0.98, ['#8b6b4a', '#a07a55', '#7b8b5d'], 190, 82, 0.55);
+    this.renderBirds(playerZ);
+  }
+
+  renderMountainRange(playerZ, drift, baseY, colors, width, height, softness = 0.6) {
+    const offset = -((playerZ * drift) % width);
+    const step = width * 0.58;
+
+    for (let x = offset - width; x < this.canvas.width + width; x += step) {
+      const color = colors[Math.abs(Math.floor(x / width)) % colors.length];
+      const peak1X = x + (width * 0.22);
+      const peak1Y = baseY - (height * 0.72);
+      const peak2X = x + (width * 0.48);
+      const peak2Y = baseY - height;
+      const ridgeEndX = x + width;
+      const ridgeEndY = baseY - (height * 0.18);
+
+      this.ctx.fillStyle = color;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, baseY);
+      this.ctx.quadraticCurveTo(x + width * 0.08, baseY - height * 0.14, peak1X, peak1Y);
+      this.ctx.quadraticCurveTo(x + width * 0.34, baseY - height * (0.95 + softness * 0.08), peak2X, peak2Y);
+      this.ctx.quadraticCurveTo(x + width * 0.72, baseY - height * (0.38 + softness * 0.08), ridgeEndX, ridgeEndY);
+      this.ctx.lineTo(ridgeEndX, baseY);
+      this.ctx.closePath();
+      this.ctx.fill();
+
+      this.ctx.fillStyle = 'rgba(245, 222, 179, 0.18)';
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + width * 0.34, baseY - height * 0.72);
+      this.ctx.quadraticCurveTo(x + width * 0.44, baseY - height * 0.97, x + width * 0.55, baseY - height * 0.62);
+      this.ctx.lineTo(x + width * 0.48, baseY - height * 0.55);
+      this.ctx.closePath();
+      this.ctx.fill();
+
+      this.ctx.fillStyle = 'rgba(59, 41, 28, 0.14)';
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + width * 0.52, baseY - height * 0.18);
+      this.ctx.quadraticCurveTo(x + width * 0.68, baseY - height * 0.52, x + width * 0.84, baseY - height * 0.12);
+      this.ctx.lineTo(x + width * 0.8, baseY);
+      this.ctx.lineTo(x + width * 0.58, baseY);
+      this.ctx.closePath();
+      this.ctx.fill();
+    }
+  }
+
+  renderBirds(playerZ) {
+    const flockOffset = (playerZ * 0.9) % (this.canvas.width + 140);
+    const startX = this.canvas.width - flockOffset + 70;
+    const startY = this.cy * 0.28;
+
+    this.ctx.strokeStyle = 'rgba(30, 41, 59, 0.55)';
+    this.ctx.lineWidth = 2;
+
+    for (let i = 0; i < 5; i++) {
+      const x = startX + (i * 26);
+      const y = startY + Math.sin((playerZ * 0.08) + i) * 8;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x - 7, y);
+      this.ctx.quadraticCurveTo(x - 2, y - 5, x + 3, y);
+      this.ctx.quadraticCurveTo(x + 8, y - 5, x + 13, y);
+      this.ctx.stroke();
+    }
+  }
+
+  renderTreeRow(playerZ, side = 1) {
+    const spacing = 14;
+    const startZ = Math.floor(playerZ / spacing) * spacing;
+
+    for (let z = startZ - spacing; z < playerZ + 95; z += spacing) {
+      const x = side * (5.8 + ((Math.floor(z / spacing) % 2) * 0.7));
+      const p = this.project(x, 0, z);
+      if (!p) continue;
+
+      const scale = Math.max(0.18, p.scale / 36);
+      const trunkW = 10 * scale;
+      const trunkH = 28 * scale;
+      const crownW = 42 * scale;
+      const crownH = 46 * scale;
+
+      this.ctx.fillStyle = '#7c3f00';
+      this.ctx.fillRect(p.x - trunkW / 2, p.y - trunkH, trunkW, trunkH);
+
+      this.ctx.fillStyle = side > 0 ? '#22c55e' : '#10b981';
+      this.ctx.beginPath();
+      this.ctx.moveTo(p.x, p.y - trunkH - crownH);
+      this.ctx.lineTo(p.x - crownW / 2, p.y - trunkH + 6 * scale);
+      this.ctx.lineTo(p.x + crownW / 2, p.y - trunkH + 6 * scale);
+      this.ctx.closePath();
+      this.ctx.fill();
+
+      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+      this.ctx.beginPath();
+      this.ctx.arc(p.x - 6 * scale, p.y - trunkH - crownH * 0.55, 8 * scale, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+  }
+
   renderTrack(playerZ) {
     const renderDist = 80;
     const startZ = Math.floor(playerZ / 4) * 4;
 
-    // Horizon sky gradient
-    const grad = this.ctx.createLinearGradient(0, 0, 0, this.cy);
-    grad.addColorStop(0, '#0f172a');
-    grad.addColorStop(1, '#1e1b4b');
-    this.ctx.fillStyle = grad;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.cy + 50);
+    this.renderBackdrop(playerZ);
 
     // Track surface projection
     for (let z = startZ; z < startZ + renderDist; z += 4) {
@@ -73,6 +181,9 @@ class Renderer {
         }
       });
     }
+
+    this.renderTreeRow(playerZ, -1);
+    this.renderTreeRow(playerZ, 1);
   }
 
   drawBox(x, y, z, w, h, d, color, strokeColor = null) {
